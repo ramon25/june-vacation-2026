@@ -348,10 +348,13 @@
   const newId = () => "id" + (uid++).toString(36);
 
   // ---------- Datumshilfen ----------
+  // Datumslogik durchgehend in UTC, damit sich die Tage je nach Zeitzone
+  // nicht um einen Tag verschieben (europäische Woche Mo–So).
   function addDays(iso, n) {
-    const d = new Date(iso + "T00:00:00");
-    d.setDate(d.getDate() + n);
-    return d.toISOString().slice(0, 10);
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + n);
+    return dt.toISOString().slice(0, 10);
   }
   function dayList() {
     const out = [];
@@ -359,10 +362,16 @@
     return out;
   }
   function fmtDate(iso) {
-    const d = new Date(iso + "T00:00:00");
-    return { day: d.getDate(), dow: DOW[(d.getDay() + 6) % 7], mon: MON[d.getMonth()] };
+    const [y, m, d] = iso.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return { day: dt.getUTCDate(), dow: DOW[(dt.getUTCDay() + 6) % 7], mon: MON[dt.getUTCMonth()] };
   }
-  function todayIso() { return new Date().toISOString().slice(0, 10); }
+  function todayIso() {
+    const d = new Date();
+    return d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
+  }
 
   // ---------- Standarddaten (aus dem Foto übertragen) ----------
   function defaults() {
